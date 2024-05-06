@@ -1,0 +1,1 @@
+# Docker image for LLaVA: Large Language and Vision Assistant
