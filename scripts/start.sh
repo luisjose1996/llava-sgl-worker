@@ -64,8 +64,10 @@ else
     if [[ ${MODEL} ]]
     then
       export LLAVA_MODEL=${MODEL}
+      export LLAVA_MODEL_TOKENIZER=${MODEL_TOKENIZER}
     else
       export LLAVA_MODEL="liuhaotian/llava-v1.6-mistral-7b"
+      export LLAVA_MODEL="llava-hf/llava-v1.6-mistral-7b-hf"
     fi
 
     echo "Starting LLaVA using model: ${LLAVA_MODEL}"
