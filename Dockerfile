@@ -43,7 +43,6 @@ RUN source /venv/bin/activate && \
 # Download the default model
 ARG LLAVA_MODEL
 ENV MODEL="${LLAVA_MODEL}"
-ENV MODEL_TOKENIZER="${LLAVA_MODEL_TOKENIZER}"
 ENV HF_HOME="/"
 COPY --chmod=755 scripts/download_models.py /download_models.py
 RUN source /venv/bin/activate && \
@@ -64,6 +63,9 @@ ENV TEMPLATE_VERSION=${RELEASE}
 # Set the venv path
 ARG VENV_PATH
 ENV VENV_PATH=${VENV_PATH}
+
+ARG LLAVA_MODEL_TOKENIZER
+ENV MODEL_TOKENIZER="${LLAVA_MODEL_TOKENIZER}"
 
 # Copy the scripts
 WORKDIR /
