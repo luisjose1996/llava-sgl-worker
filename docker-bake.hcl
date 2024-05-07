@@ -3,7 +3,7 @@ variable "REGISTRY" {
 }
 
 variable "REGISTRY_USER" {
-    default = "confidentmeerkat"
+    default = "luisnaveda"
 }
 
 variable "APP" {

@@ -4,6 +4,8 @@ source ${VENV_PATH}/bin/activate
 cd /workspace/LLaVA
 
 pip install "sglang[all]"
+pip install vllm==0.3.3
+
 
 python3 -m sglang.launch_server --model-path ${LLAVA_MODEL} --tokenizer-path ${LLAVA_MODEL_TOKENIZER} --port ${SQL_ENDPOINT_PORT} --tp 2
 
