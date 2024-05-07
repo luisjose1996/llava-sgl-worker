@@ -80,5 +80,3 @@ else
 fi
 
 echo "All services have been started"
-
-nohup

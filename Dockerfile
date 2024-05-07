@@ -70,4 +70,4 @@ COPY --chmod=755 scripts/* ./
 
 # Start the container
 SHELL ["/bin/bash", "--login", "-c"]
-CMD [ "/start.sh" ]
+CMD [ "nohup", "/start.sh" ]
