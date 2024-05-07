@@ -81,5 +81,4 @@ fi
 
 echo "All services have been started"
 
-tail -f /workspace/logs/controller.log /workspace/logs/model-worker.log /workspace/logs/webserver.log
-
+nohup
