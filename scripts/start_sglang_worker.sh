@@ -3,11 +3,9 @@ VENV_PATH=$(cat /workspace/LLaVA/venv_path)
 source ${VENV_PATH}/bin/activate
 cd /workspace/LLaVA
 
-pip install "sglang[all]"
-pip install vllm==0.3.3
+nohup python3 -m sglang.launch_server --model-path ${LLAVA_MODEL} --tokenizer-path ${LLAVA_MODEL_TOKENIZER} --port ${SQL_ENDPOINT_PORT} --tp 2 2>&1 &
+deactivate
 
-
-python3 -m sglang.launch_server --model-path ${LLAVA_MODEL} --tokenizer-path ${LLAVA_MODEL_TOKENIZER} --port ${SQL_ENDPOINT_PORT} --tp 2
 
 nohup python -m llava.serve.sglang_worker \
   --host ${LLAVA_HOST} \

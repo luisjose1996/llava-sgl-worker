@@ -36,6 +36,9 @@ RUN source /venv/bin/activate && \
     pip3 install flash-attn --no-build-isolation && \
     pip3 install transformers==4.37.2 && \
     pip3 install protobuf && \
+    pip3 install "sglang[all]" \
+    pip3 install vllm==0.3.3 \
+    
     deactivate
 
 # Download the default model
