@@ -1,84 +1,162 @@
 #!/usr/bin/env bash
+# ---------------------------------------------------------------------------- #
+#                          Function Definitions                                #
+# ---------------------------------------------------------------------------- #
 
-export PYTHONUNBUFFERED=1
-export APP="LLaVA"
-DOCKER_IMAGE_VERSION_FILE="/workspace/${APP}/docker_image_version"
-
-echo "Template version: ${TEMPLATE_VERSION}"
-echo "venv: ${VENV_PATH}"
-
-if [[ -e ${DOCKER_IMAGE_VERSION_FILE} ]]; then
-    EXISTING_VERSION=$(cat ${DOCKER_IMAGE_VERSION_FILE})
-else
-    EXISTING_VERSION="0.0.0"
-fi
-
-sync_apps() {
-    # Sync venv to workspace to support Network volumes
-    echo "Syncing venv to workspace, please wait..."
-    mkdir -p ${VENV_PATH}
-    rsync --remove-source-files -rlptDu /venv/ ${VENV_PATH}/
-
-    # Sync application to workspace to support Network volumes
-    echo "Syncing ${APP} to workspace, please wait..."
-    rsync --remove-source-files -rlptDu /${APP}/ /workspace/${APP}/
-
-    echo "Syncing models to workspace, please wait..."
-    rsync --remove-source-files -rlptDu /hub/ /workspace/hub/
-
-    echo "${TEMPLATE_VERSION}" > ${DOCKER_IMAGE_VERSION_FILE}
-    echo "${VENV_PATH}" > "/workspace/${APP}/venv_path"
+start_nginx() {
+    echo "Starting Nginx service..."
+    service nginx start
 }
 
-fix_venvs() {
-    # Fix the venv to make it work from /workspace
-    echo "Fixing venv..."
-    /fix_venv.sh /venv ${VENV_PATH}
+execute_script() {
+    local script_path=$1
+    local script_msg=$2
+    if [[ -f ${script_path} ]]; then
+        echo "${script_msg}"
+        bash ${script_path}
+    fi
 }
 
-if [ "$(printf '%s\n' "$EXISTING_VERSION" "$TEMPLATE_VERSION" | sort -V | head -n 1)" = "$EXISTING_VERSION" ]; then
-    if [ "$EXISTING_VERSION" != "$TEMPLATE_VERSION" ]; then
-        sync_apps
-        fix_venvs
-    else
-        echo "Existing version is the same as the template version, no syncing required."
-    fi
-else
-    echo "Existing version is newer than the template version, not syncing!"
-fi
-
-if [[ ${DISABLE_AUTOLAUNCH} ]]
-then
-    echo "Auto launching is disabled so the application will not be started automatically"
-else
-    # Configure environment variables
-    export LLAVA_HOST="0.0.0.0"
-    export LLAVA_CONTROLLER_PORT="10000"
-    export LLAVA_MODEL_WORKER_PORT="40000"
-    export LLAVA_MODEL_SGLANG_WORKER_PORT="40001"
-    export SQL_ENDPOINT_PORT="30000"
-    export GRADIO_SERVER_NAME=${LLAVA_HOST}
-    export GRADIO_SERVER_PORT="3001"
-    export HF_HOME="/workspace"
-
-    if [[ ${MODEL} ]]
-    then
-      export LLAVA_MODEL=${MODEL}
-      export LLAVA_MODEL_TOKENIZER=${MODEL_TOKENIZER}
-    else
-      export LLAVA_MODEL="liuhaotian/llava-v1.6-mistral-7b"
-      export LLAVA_MODEL="llava-hf/llava-v1.6-mistral-7b-hf"
+generate_ssh_host_keys() {
+    if [ ! -f /etc/ssh/ssh_host_rsa_key ]; then
+        ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -q -N ''
     fi
 
-    echo "Starting LLaVA using model: ${LLAVA_MODEL}"
-    /start_controller.sh
-    /start_sglang_worker.sh
-    /start_webserver.sh
-    echo "LLaVA started"
-    echo "Log files: "
-    echo "   - Controller:   /workspace/logs/controller.log"
-    echo "   - Model Worker: /workspace/logs/model-worker.log"
-    echo "   - Webserver:    /workspace/logs/webserver.log"
-fi
+    if [ ! -f /etc/ssh/ssh_host_dsa_key ]; then
+        ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key -q -N ''
+    fi
 
-echo "All services have been started"
+    if [ ! -f /etc/ssh/ssh_host_ecdsa_key ]; then
+        ssh-keygen -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key -q -N ''
+    fi
+
+    if [ ! -f /etc/ssh/ssh_host_ed25519_key ]; then
+        ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -q -N ''
+    fi
+}
+
+setup_ssh() {
+    echo "Setting up SSH..."
+    mkdir -p ~/.ssh
+
+    # Add SSH public key from environment variable to ~/.ssh/authorized_keys
+    # if the PUBLIC_KEY environment variable is set
+    if [[ ${PUBLIC_KEY} ]]; then
+        echo -e "${PUBLIC_KEY}\n" >> ~/.ssh/authorized_keys
+    fi
+
+    chmod 700 -R ~/.ssh
+
+    # Generate SSH host keys if they don't exist
+    generate_ssh_host_keys
+
+    service ssh start
+
+    echo "SSH host keys:"
+    cat /etc/ssh/*.pub
+}
+
+export_env_vars() {
+    echo "Exporting environment variables..."
+    printenv | grep -E '^RUNPOD_|^PATH=|^_=' | awk -F = '{ print "export " $1 "=\"" $2 "\"" }' >> /etc/rp_environment
+    echo 'source /etc/rp_environment' >> ~/.bashrc
+}
+
+start_jupyter() {
+    echo "Starting Jupyter Lab..."
+    mkdir -p /workspace/logs
+    cd / && \
+    nohup jupyter lab --allow-root \
+      --no-browser \
+      --port=8888 \
+      --ip=* \
+      --FileContentsManager.delete_to_trash=False \
+      --ContentsManager.allow_hidden=True \
+      --ServerApp.terminado_settings='{"shell_command":["/bin/bash"]}' \
+      --ServerApp.token="" \
+      --ServerApp.allow_origin=* \
+      --ServerApp.preferred_dir=/workspace &> /workspace/logs/jupyter.log &
+    echo "Jupyter Lab started"
+}
+
+start_runpod_uploader() {
+    echo "Starting RunPod Uploader..."
+    nohup /usr/local/bin/runpod-uploader &> /workspace/logs/runpod-uploader.log &
+    echo "RunPod Uploader started"
+}
+
+configure_filezilla() {
+    # Only proceed if there is a public IP
+    if [[ ! -z "${RUNPOD_PUBLIC_IP}" ]]; then
+        # Server information
+        hostname="${RUNPOD_PUBLIC_IP}"
+        port="${RUNPOD_TCP_PORT_22}"
+
+        # Generate a random password
+        password=$(openssl rand -base64 12)
+
+        # Set the password for the root user
+        echo "root:${password}" | chpasswd
+
+        # Update SSH configuration
+        ssh_config="/etc/ssh/sshd_config"
+
+        # Enable PasswordAuthentication
+        grep -q "^PasswordAuthentication" ${ssh_config} && \
+          sed -i "s/^PasswordAuthentication.*/PasswordAuthentication yes/" ${ssh_config} || \
+          echo "PasswordAuthentication yes" >> ${ssh_config}
+
+        # Enable PermitRootLogin
+        grep -q "^PermitRootLogin" ${ssh_config} && \
+          sed -i "s/^PermitRootLogin.*/PermitRootLogin yes/" ${ssh_config} || \
+          echo "PermitRootLogin yes" >> ${ssh_config}
+
+        # Restart the SSH service
+        service ssh restart
+
+        # Create FileZilla XML configuration for SFTP
+        filezilla_config_file="/workspace/filezilla_sftp_config.xml"
+        cat > ${filezilla_config_file} << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<FileZilla3 version="3.66.1" platform="linux">
+    <Servers>
+        <Server>
+            <Host>${hostname}</Host>
+            <Port>${port}</Port>
+            <Protocol>1</Protocol> <!-- 1 for SFTP -->
+            <Type>0</Type>
+            <User>root</User>
+            <Pass encoding="base64">$(echo -n ${password} | base64)</Pass>
+            <Logontype>1</Logontype> <!-- 1 for Normal logon type -->
+            <EncodingType>Auto</EncodingType>
+            <BypassProxy>0</BypassProxy>
+            <Name>Generated Server</Name>
+            <RemoteDir>/workspace</RemoteDir>
+            <SyncBrowsing>0</SyncBrowsing>
+            <DirectoryComparison>0</DirectoryComparison>
+            <!-- Additional settings can be added here -->
+        </Server>
+    </Servers>
+</FileZilla3>
+EOF
+        echo "FileZilla SFTP configuration file created at: ${filezilla_config_file}"
+    else
+        echo "RUNPOD_PUBLIC_IP is not set. Skipping FileZilla configuration."
+    fi
+}
+
+# ---------------------------------------------------------------------------- #
+#                               Main Program                                   #
+# ---------------------------------------------------------------------------- #
+
+echo "Container Started, configuration in progress..."
+start_nginx
+# setup_ssh
+start_jupyter
+start_runpod_uploader
+execute_script "/pre_start.sh" "Running pre-start script..."
+# configure_filezilla
+export_env_vars
+execute_script "/post_start.sh" "Running post-start script..."
+echo "Container is READY!"
+sleep infinity
