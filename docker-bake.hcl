@@ -11,7 +11,7 @@ variable "APP" {
 }
 
 variable "RELEASE" {
-    default = "1.6.0"
+    default = "1.7.0"
 }
 
 variable "CU_VERSION" {
@@ -44,7 +44,7 @@ target "default" {
         TORCH_VERSION = "${TORCH_VERSION}+cu${CU_VERSION}"
         XFORMERS_VERSION = "0.0.23.post1+cu${CU_VERSION}"
         LLAVA_COMMIT = "0b3b478e7cc8e55d7ca312ecd2ff5a90690d08d5"
-        LLAVA_MODEL = "liuhaotian/llava-v1.6-mistral-7b",
+        LLAVA_MODEL = "dillonlaird/hf-llava-v1.6-34b",
         LLAVA_MODEL_TOKENIZER="llava-hf/llava-v1.6-mistral-7b-hf"
         VENV_PATH = "/workspace/venvs/${APP}"
     }
