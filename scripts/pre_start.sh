@@ -72,6 +72,7 @@ else
 
     echo "Starting LLaVA using model: ${LLAVA_MODEL}"
     /start_controller.sh
+    /start_sglang_backend.sh
     /start_sglang_worker.sh
     /start_webserver.sh
     echo "LLaVA started"
