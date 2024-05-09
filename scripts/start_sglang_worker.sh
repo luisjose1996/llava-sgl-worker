@@ -7,7 +7,7 @@ nohup python3 -m sglang.launch_server --model-path ${LLAVA_MODEL} --port ${SQL_E
 
 
 nohup python -m llava.serve.sglang_worker \
-  --host localhost \
+  --host 127.0.0.1 \
   --controller http://localhost:${LLAVA_CONTROLLER_PORT} \
   --port ${LLAVA_MODEL_SGLANG_WORKER_PORT} \
   --worker http://localhost:${LLAVA_MODEL_SGLANG_WORKER_PORT} \
