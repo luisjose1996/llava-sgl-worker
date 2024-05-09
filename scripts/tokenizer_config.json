@@ -41,14 +41,6 @@
       "rstrip": false,
       "single_word": false,
       "special": true
-    },
-    "64002": {
-      "content": "<image>",
-      "lstrip": false,
-      "normalized": false,
-      "rstrip": false,
-      "single_word": false,
-      "special": true
     }
   },
   "bos_token": "<|startoftext|>",
