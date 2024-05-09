@@ -7,12 +7,12 @@ URL="http://localhost:$SGL_ENDPOINT_PORT/get_model_info"
 # Wait for the HTTP status to be 200 OK
 HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" $URL)
 while [ $HTTP_STATUS -ne 200 ]; do
-  echo "Waiting for endpoint to be up..."
+  echo "Waiting for backend to be up..."
   sleep 1 # Wait for 1 second before trying again
   HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" $URL)
 done
 
-echo "Endpoint is up - Running script..."
+echo "SGLang Backend is up - Running script..."
 source ${VENV_PATH}/bin/activate
 cd /workspace/LLaVA
 

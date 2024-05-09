@@ -45,7 +45,7 @@ target "default" {
         XFORMERS_VERSION = "0.0.23.post1+cu${CU_VERSION}"
         LLAVA_COMMIT = "0b3b478e7cc8e55d7ca312ecd2ff5a90690d08d5"
         LLAVA_MODEL = "dillonlaird/hf-llava-v1.6-34b",
-        LLAVA_MODEL_TOKENIZER="llava-hf/llava-v1.6-mistral-7b-hf"
+        LLAVA_MODEL_TOKENIZER="liuhaotian/llava-v1.6-34b"
         VENV_PATH = "/workspace/venvs/${APP}"
     }
 }
