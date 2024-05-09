@@ -53,10 +53,10 @@ then
 else
     # Configure environment variables
     export LLAVA_HOST="0.0.0.0"
-    export LLAVA_CONTROLLER_PORT="10000"
+    export LLAVA_CONTROLLER_PORT="15000"
     export LLAVA_MODEL_WORKER_PORT="40000"
-    export LLAVA_MODEL_SGLANG_WORKER_PORT="40001"
-    export SQL_ENDPOINT_PORT="30000"
+    export LLAVA_MODEL_SGLANG_WORKER_PORT="45001"
+    export SGL_ENDPOINT_PORT="35000"
     export GRADIO_SERVER_NAME=${LLAVA_HOST}
     export GRADIO_SERVER_PORT="3001"
     export HF_HOME="/workspace"
@@ -72,8 +72,11 @@ else
 
     echo "Starting LLaVA using model: ${LLAVA_MODEL}"
     /start_controller.sh
+    echo "Controller started"
     /start_sglang_backend.sh
+    echo "SGLang backend started"
     /start_sglang_worker.sh
+    echo "SGLang worker started"
     /start_webserver.sh
     echo "LLaVA started"
     echo "Log files: "

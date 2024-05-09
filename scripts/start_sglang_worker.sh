@@ -8,5 +8,5 @@ nohup python -m llava.serve.sglang_worker \
   --controller http://localhost:${LLAVA_CONTROLLER_PORT} \
   --port ${LLAVA_MODEL_SGLANG_WORKER_PORT} \
   --worker http://localhost:${LLAVA_MODEL_SGLANG_WORKER_PORT} \
-  --sgl-endpoint http://localhost:${SQL_ENDPOINT_PORT} 2>&1 &
+  --sgl-endpoint http://localhost:${SQL_ENDPOINT_PORT} > /workspace/logs/sgl-worker.log 2>&1 &
 deactivate
