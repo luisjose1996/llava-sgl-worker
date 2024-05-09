@@ -67,7 +67,7 @@ ENV VENV_PATH=${VENV_PATH}
 ARG LLAVA_MODEL_TOKENIZER
 ENV MODEL_TOKENIZER="${LLAVA_MODEL_TOKENIZER}"
 
-RUN cp -f tokenizer_config.json /hub/models--dillonlaird--hf-llava-v1.6-34b/snapshots/839935378b0d9cb583628a70cd1090c04db5f643/tokenizer_config.json
+RUN cp -f ./tokenizer_config.json /hub/models--dillonlaird--hf-llava-v1.6-34b/snapshots/839935378b0d9cb583628a70cd1090c04db5f643/tokenizer_config.json
 
 # Copy the scripts
 WORKDIR /
